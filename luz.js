@@ -32,9 +32,56 @@
     document.getElementById('ik').textContent = `${t.name} · ${t.k}`;
     document.getElementById('id').textContent = t.t;
     pw.textContent = on ? 'Ligada' : 'Desligada'; pw.classList.toggle('on', on);
+    const sujeito = userUrl ? 'no meu ambiente' : 'na sala de exemplo';
+    wa.href = 'https://wa.me/5517981200526?text=' + encodeURIComponent(
+      `Olá Arthur! Testei a luz ${t.name} (${t.k}) ${sujeito} no seu site e gostaria de um orçamento de iluminação.`);
   }
   tempsEl.onclick = e => { const b = e.target.closest('.temp'); if (b) { cur = +b.dataset.i; on = true; light(); } };
   dim.oninput = () => { on = true; light(); };
   pw.onclick = () => { on = !on; light(); };
+
+  // foto do visitante: fica só no navegador (URL local), nada é enviado
+  const photo = document.getElementById('photo'), file = document.getElementById('file'), tag = document.getElementById('tag'),
+    reset = document.getElementById('reset'), dl = document.getElementById('dl'), wa = document.getElementById('wa'), note = document.getElementById('upnote');
+  const DEFAULT_NOTE = note.textContent, EXAMPLE_SRC = photo.getAttribute('src'), EXAMPLE_RATIO = '1400 / 875';
+  let userUrl = null;
+  const say = (msg, err) => { note.textContent = msg; note.classList.toggle('err', !!err); };
+  function useExample() {
+    if (userUrl) URL.revokeObjectURL(userUrl);
+    userUrl = null;
+    photo.src = EXAMPLE_SRC; stage.style.aspectRatio = EXAMPLE_RATIO; stage.classList.remove('user');
+    tag.textContent = 'Projeto de exemplo'; reset.hidden = dl.hidden = true; say(DEFAULT_NOTE); light();
+  }
+  file.onchange = () => {
+    const f = file.files[0]; file.value = '';
+    if (!f) return;
+    if (!/^image\/(jpeg|png|webp|gif|avif|heic|heif)$/i.test(f.type)) return say('Escolha uma imagem (JPG, PNG ou WebP).', true);
+    if (f.size > 25 * 1024 * 1024) return say('Foto muito grande (máx. 25 MB).', true);
+    const url = URL.createObjectURL(f), probe = new Image();
+    probe.onload = () => {
+      if (userUrl) URL.revokeObjectURL(userUrl);
+      userUrl = url; photo.src = url;
+      stage.style.aspectRatio = Math.min(1.9, Math.max(0.75, probe.naturalWidth / probe.naturalHeight));
+      stage.classList.add('user'); tag.textContent = 'Sua foto'; reset.hidden = dl.hidden = false;
+      say('Pronto! Troque a cor e a intensidade da luz. É uma simulação ilustrativa.'); light();
+    };
+    probe.onerror = () => { URL.revokeObjectURL(url); say('Não consegui abrir essa imagem. Tente JPG ou PNG.', true); };
+    probe.src = url;
+  };
+  reset.onclick = useExample;
+  dl.onclick = () => {
+    const w0 = photo.naturalWidth, h0 = photo.naturalHeight, k = Math.min(1, 1800 / Math.max(w0, h0));
+    const cv = document.createElement('canvas'); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
+    const ctx = cv.getContext('2d'), li = on ? dim.value / 100 : 0.03;
+    ctx.filter = `brightness(${0.26 + li * 0.8}) saturate(${0.7 + li * 0.35})`;   // mesmos valores do CSS
+    ctx.drawImage(photo, 0, 0, cv.width, cv.height);
+    ctx.filter = 'none'; ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.85;   // igual ao .stage.user .tint
+    ctx.fillStyle = `rgb(${TEMPS[cur].rgb})`; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = 0.4; ctx.fillRect(0, 0, cv.width, cv.height);   // igual ao .tint2
+    cv.toBlob(b => {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+      a.download = `simulacao-luz-${TEMPS[cur].k}.jpg`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    }, 'image/jpeg', 0.9);
+  };
   light();
 })();
