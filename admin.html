@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin | Casa Riflesso</title>
+<meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+body{padding:30px 0 80px}
+.panel{background:var(--bg2);border:1px solid var(--line);padding:28px;margin-bottom:22px}
+.panel h2{font-size:1.9rem;margin-bottom:16px}
+label{display:block;font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;color:var(--mute);margin:14px 0 6px}
+input,textarea,select{width:100%;background:var(--bg);border:1px solid var(--line);color:var(--ink);padding:12px;font:inherit}
+input:focus,textarea:focus,select:focus{outline:0;border-color:var(--gold)}
+textarea{min-height:90px;resize:vertical}
+.hint{font-size:.8rem;color:var(--mute);margin-top:6px}
+.row{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.item{display:flex;gap:14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.item .t{width:64px;height:64px;background-size:cover;background-position:center;flex:none}
+.item div:nth-child(2){flex:1}.item small{color:var(--gold)}
+.btn.sm{padding:8px 16px}
+.btn.red{border-color:#c0564a;color:#e07a6e}.btn.red:hover{background:#c0564a;color:#fff}
+#login{max-width:380px;margin:18vh auto}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+.msg{color:var(--gold);margin-top:12px;min-height:1.4em}
+.prev{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}.prev img{width:70px;height:70px;object-fit:cover}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div id="login" class="panel">
+  <h2>Área restrita</h2>
+  <label>Senha</label><input type="password" id="pw" autofocus>
+  <div class="row"><button class="btn solid" onclick="login()">Entrar</button></div>
+  <p class="hint">Modelo de demonstração · senha: <b>riflesso</b></p>
+  <p class="msg" id="lm"></p>
+</div>
+
+<div id="app" hidden>
+  <div class="top"><a href="index.html" class="logo">Casa <b>Riflesso</b> · Admin</a><div><a href="index.html" class="btn sm">Ver site</a> <button class="btn sm red" onclick="logout()">Sair</button></div></div>
+
+  <div class="panel">
+    <h2 id="ft">Novo projeto</h2>
+    <label>Título</label><input id="title" placeholder="Ex.: Residência Jardins">
+    <label>Categoria</label><input id="cat" list="cats" placeholder="Residencial, Comercial, Externo…"><datalist id="cats"></datalist>
+    <label>Descrição</label><textarea id="desc"></textarea>
+    <label>Fotos do Google Drive (um link por linha)</label>
+    <textarea id="imgs" placeholder="https://drive.google.com/file/d/XXXX/view?usp=sharing"></textarea>
+    <p class="hint">No Drive: clique direito na foto → Compartilhar → "Qualquer pessoa com o link" → Copiar link. Cole aqui. Também aceita links de imagem comuns.</p>
+    <div class="prev" id="prev"></div>
+    <div class="row"><button class="btn solid" onclick="save()">Publicar projeto</button><button class="btn" onclick="resetForm()">Limpar</button></div>
+    <p class="msg" id="m"></p>
+  </div>
+
+  <div class="panel">
+    <h2>Projetos publicados</h2>
+    <div id="list"></div>
+    <div class="row">
+      <button class="btn sm" onclick="exportJson()">Exportar backup (.json)</button>
+      <label class="btn sm" style="margin:0;cursor:pointer">Importar backup<input type="file" accept=".json" hidden onchange="importJson(this)"></label>
+      <button class="btn sm red" onclick="if(confirm('Voltar aos projetos de exemplo?')){localStorage.removeItem(KEY);load()}">Restaurar exemplos</button>
+    </div>
+  </div>
+</div>
+</div>
+<script src="data.js"></script>
+<script>
+const PW = 'riflesso', $ = id => document.getElementById(id);
+let list = [], editing = null;
+function login() {
+  if ($('pw').value === PW) { sessionStorage.cr_auth = 1; show(); } else $('lm').textContent = 'Senha incorreta.';
+}
+$('pw').onkeydown = e => e.key === 'Enter' && login();
+function logout() { sessionStorage.removeItem('cr_auth'); location.reload(); }
+function show() { $('login').hidden = true; $('app').hidden = false; load(); }
+function load() {
+  list = loadProjects();
+  $('cats').innerHTML = [...new Set(list.map(p => p.cat))].map(c => `<option value="${esc(c)}">`).join('');
+  $('list').innerHTML = list.map((p, i) => `<div class="item"><div class="t" style="background-image:url('${esc(p.imgs[0])}')"></div><div><small>${esc(p.cat)}</small><br>${esc(p.title)} <span class="hint">· ${p.imgs.length} foto(s)</span></div><button class="btn sm" onclick="edit(${i})">Editar</button><button class="btn sm red" onclick="del(${i})">Excluir</button></div>`).join('') || '<p class="hint">Nenhum projeto.</p>';
+}
+$('imgs').oninput = () => {
+  $('prev').innerHTML = $('imgs').value.split('\n').filter(l => l.trim()).map(l => `<img src="${esc(driveImg(l))}" alt="" onerror="this.style.opacity=.2">`).join('');
+};
+function save() {
+  const imgs = $('imgs').value.split('\n').map(l => l.trim()).filter(Boolean).map(driveImg);
+  if (!$('title').value.trim() || !imgs.length) { $('m').textContent = 'Preencha o título e ao menos 1 foto.'; return; }
+  const p = { id: editing ?? 'p' + Date.now(), title: $('title').value.trim(), cat: $('cat').value.trim() || 'Geral', desc: $('desc').value.trim(), imgs, r: '4/5' };
+  if (editing !== null) { const i = list.findIndex(x => x.id === editing); list[i] = { ...list[i], ...p }; } else list.unshift(p);
+  saveProjects(list); resetForm(); load(); $('m').textContent = 'Publicado! Já aparece no site.';
+}
+function edit(i) {
+  const p = list[i]; editing = p.id; $('ft').textContent = 'Editando projeto';
+  $('title').value = p.title; $('cat').value = p.cat; $('desc').value = p.desc;
+  $('imgs').value = p.imgs.join('\n'); $('imgs').oninput(); scrollTo({ top: 0, behavior: 'smooth' });
+}
+function del(i) { if (confirm('Excluir "' + list[i].title + '"?')) { list.splice(i, 1); saveProjects(list); load(); } }
+function resetForm() { editing = null; $('ft').textContent = 'Novo projeto'; ['title', 'cat', 'desc', 'imgs'].forEach(k => $(k).value = ''); $('prev').innerHTML = ''; $('m').textContent = ''; }
+function exportJson() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(list, null, 2)], { type: 'application/json' }));
+  a.download = 'projetos-casa-riflesso.json'; a.click();
+}
+function importJson(inp) {
+  const f = inp.files[0]; if (!f) return;
+  f.text().then(t => { try { const d = JSON.parse(t); if (!Array.isArray(d)) throw 0; saveProjects(d); load(); } catch { alert('Arquivo inválido.'); } });
+}
+if (sessionStorage.cr_auth) show();
+</script>
+</body>
+</html>

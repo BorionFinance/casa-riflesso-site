@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Casa Riflesso | Design de Iluminação</title>
+<meta name="description" content="Iluminação é estratégia. Projetos luminotécnicos para casa e comércio.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav>
+  <a href="#" class="logo">Casa <b>Riflesso</b></a>
+  <ul><li><a href="#projetos">Projetos</a></li><li><a href="#sobre">Sobre</a></li><li><a href="#servicos">Serviços</a></li><li><a href="#contato">Contato</a></li></ul>
+</nav>
+
+<header class="hero">
+  <div>
+    <h1 aria-label="Design de iluminação"><span class="l1" aria-hidden="true">Design de</span><span aria-hidden="true"><span class="dot-i">ı</span>luminação</span></h1>
+    <p class="hero-tag">Iluminação é estratégia</p>
+    <p>Projetos luminotécnicos sob medida que transformam ambientes, valorizam a arquitetura e criam sensações.</p>
+    <a href="#projetos" class="btn">Ver projetos</a>
+  </div>
+</header>
+
+<section id="projetos">
+  <div class="wrap">
+    <div class="sec-title reveal"><p class="eyebrow">Portfólio</p><h2>Projetos realizados</h2></div>
+    <div class="filters" id="filters"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
+
+<section class="about" id="sobre">
+  <div class="wrap">
+    <div class="intro reveal">
+      <p class="eyebrow">Sobre</p>
+      <h2>A luz certa muda tudo</h2>
+      <p>O mesmo ambiente conta histórias diferentes conforme a cor da luz. Troque a temperatura de cor e a intensidade da luz e veja a mesma sala mudar de personalidade — é assim que o projeto nasce: do estudo do espaço, da rotina de quem o usa e da identidade do lugar.</p>
+    </div>
+    <div class="lab reveal">
+      <div class="stage" id="stage"><img src="assets/sala.jpg" alt="Sala de estar com iluminação ajustável"><div class="tint"></div><div class="lights" id="lights"></div><span class="tag">Projeto de exemplo</span></div>
+      <div class="ctrl" id="ctrl">
+        <div class="kbar"></div><div class="kscale"><span>Quente</span><span>Neutra</span><span>Fria</span></div>
+        <div id="temps"></div>
+        <div class="dim"><span>Intensidade</span><input type="range" id="dim" min="15" max="100" value="85" aria-label="Intensidade da luz"><button class="pw on" id="pw">Ligada</button></div>
+        <div class="info"><div class="k" id="ik"></div><p id="id"></p></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="servicos">
+  <div class="wrap">
+    <div class="sec-title reveal"><p class="eyebrow">O que fazemos</p><h2>Serviços</h2></div>
+    <div class="services">
+      <div class="svc reveal"><i>◐</i><h3>Projeto residencial</h3><p>Luz de conforto, cenas e automação para cada ambiente da casa.</p></div>
+      <div class="svc reveal"><i>◑</i><h3>Projeto comercial</h3><p>Lojas, restaurantes e escritórios com luz que atrai e vende.</p></div>
+      <div class="svc reveal"><i>◒</i><h3>Fachadas e externos</h3><p>Realce arquitetônico, paisagismo e segurança noturna.</p></div>
+      <div class="svc reveal"><i>◓</i><h3>Consultoria</h3><p>Especificação de luminárias e revisão de projetos existentes.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="contact" id="contato">
+  <div class="wrap reveal">
+    <p class="eyebrow">Vamos conversar</p>
+    <h2>Seu próximo projeto<br>merece a luz certa</h2>
+    <p style="color:var(--mute);margin:-8px 0 26px">Fale direto com o Arthur · (17) 98120-0526</p><div class="btns">
+      <a class="btn solid" href="https://wa.me/5517981200526?text=Ol%C3%A1%20Arthur%2C%20vi%20seu%20site%20e%20gostaria%20de%20um%20or%C3%A7amento%20de%20ilumina%C3%A7%C3%A3o." target="_blank" rel="noopener">WhatsApp</a>
+      <a class="btn" href="https://www.instagram.com/casariflesso/" target="_blank" rel="noopener">@casariflesso</a>
+    </div>
+  </div>
+</section>
+
+<footer>© <span id="y"></span> Casa Riflesso · Arthur · <a href="admin.html">Área restrita</a></footer>
+<a class="wpp" href="https://wa.me/5517981200526?text=Ol%C3%A1%20Arthur%2C%20vim%20pelo%20site%20e%20gostaria%20de%20conversar%20sobre%20um%20projeto." target="_blank" rel="noopener" aria-label="Chamar no WhatsApp"><svg viewBox="0 0 24 24" width="32" height="32" fill="#fff" aria-hidden="true"><path d="M17.47 14.38c-.3-.15-1.76-.87-2.03-.97-.27-.1-.47-.15-.67.15-.2.3-.77.97-.94 1.16-.17.2-.35.22-.64.08-.3-.15-1.26-.47-2.4-1.49-.9-.8-1.5-1.77-1.66-2.07-.17-.3-.02-.46.13-.6.14-.14.3-.35.45-.52.15-.18.2-.3.3-.5.1-.2.05-.38-.02-.53-.08-.15-.67-1.62-.92-2.2-.24-.58-.49-.5-.67-.51h-.57c-.2 0-.52.08-.8.38-.27.3-1.04 1.02-1.04 2.48s1.07 2.87 1.22 3.07c.15.2 2.1 3.2 5.1 4.48.71.31 1.27.5 1.7.63.72.23 1.37.2 1.88.12.57-.09 1.77-.72 2.02-1.42.25-.7.25-1.3.17-1.42-.07-.13-.27-.2-.57-.35M12.05 21.8h-.01a9.9 9.9 0 0 1-5.03-1.38l-.36-.21-3.75.98 1-3.65-.24-.37a9.86 9.86 0 0 1-1.5-5.26c0-5.45 4.45-9.88 9.94-9.88 2.65 0 5.14 1.03 7.02 2.9a9.82 9.82 0 0 1 2.9 6.99c0 5.44-4.46 9.88-9.97 9.88M20.5 3.45A11.8 11.8 0 0 0 12.05 0C5.46 0 .1 5.33.1 11.9c0 2.1.55 4.14 1.6 5.94L0 24l6.34-1.65a11.9 11.9 0 0 0 5.7 1.45h.01c6.58 0 11.94-5.34 11.95-11.9 0-3.18-1.24-6.17-3.5-8.41"/></svg></a>
+
+<div class="lb" id="lb"><button class="x" onclick="closeLb()" aria-label="Fechar">×</button>
+  <div class="box"><div class="main" id="lbMain"></div><div class="thumbs" id="lbThumbs"></div><h3 id="lbT"></h3><p id="lbD"></p></div></div>
+
+<script src="data.js"></script>
+<script src="luz.js"></script>
+<script>
+const projects = loadProjects();
+const grid = document.getElementById('grid'), filters = document.getElementById('filters');
+document.getElementById('y').textContent = new Date().getFullYear();
+let cur = 'Todos';
+function render() {
+  const cats = ['Todos', ...new Set(projects.map(p => p.cat))];
+  filters.innerHTML = cats.map(c => `<button class="${c===cur?'on':''}" data-c="${esc(c)}">${esc(c)}</button>`).join('');
+  grid.innerHTML = projects.map((p,i) => ({p,i})).filter(({p}) => cur==='Todos'||p.cat===cur).map(({p,i}) =>
+    `<div class="card" data-i="${i}"><div class="img" style="--r:${esc(p.r||'4/5')};background-image:url('${esc(p.imgs[0])}')"></div><div class="cap"><small>${esc(p.cat)}</small><h3>${esc(p.title)}</h3></div></div>`).join('')
+    || '<p style="text-align:center;color:var(--mute)">Nenhum projeto ainda.</p>';
+}
+filters.onclick = e => { if (e.target.dataset.c) { cur = e.target.dataset.c; render(); } };
+grid.onclick = e => { const c = e.target.closest('.card'); if (c) openLb(+c.dataset.i); };
+function openLb(i) {
+  const p = projects[i];
+  const show = k => { lbMain.style.backgroundImage = `url('${p.imgs[k]}')`; [...lbThumbs.children].forEach((t,j)=>t.classList.toggle('on',j===k)); };
+  lbThumbs.innerHTML = p.imgs.map((u,k)=>`<div style="background-image:url('${esc(u)}')"></div>`).join('');
+  [...lbThumbs.children].forEach((t,k)=>t.onclick=()=>show(k));
+  lbT.textContent = p.title; lbD.textContent = p.desc; show(0); lb.classList.add('open');
+}
+function closeLb(){ lb.classList.remove('open'); }
+lb.onclick = e => { if (e.target===lb) closeLb(); };
+addEventListener('keydown', e => e.key==='Escape' && closeLb());
+render();
+const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('in')), {threshold:.15});
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
