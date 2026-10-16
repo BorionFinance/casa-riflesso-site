@@ -109,6 +109,7 @@ footer a:hover{color:var(--gold)}
 .upnote{flex-basis:100%;font-size:.78rem;color:var(--mute);margin:2px 0 0}
 .upnote.err{color:#e07a6e}
 .stage.user .lights{display:none}
-.stage.user .tint{opacity:.85}
-.tint2{position:absolute;inset:0;background:rgb(var(--lc));mix-blend-mode:color;opacity:0;transition:background .6s,opacity .6s;pointer-events:none}
-.stage.user .tint2{opacity:.4}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+.stage.user canvas{display:block}
+.stage.user img,.stage.user .tint,.stage.user .lights{display:none}
+

@@ -32,6 +32,7 @@
     document.getElementById('ik').textContent = `${t.name} · ${t.k}`;
     document.getElementById('id').textContent = t.t;
     pw.textContent = on ? 'Ligada' : 'Desligada'; pw.classList.toggle('on', on);
+    if (engine.ready) engine.schedule();
     const sujeito = userUrl ? 'no meu ambiente' : 'na sala de exemplo';
     wa.href = 'https://wa.me/5517981200526?text=' + encodeURIComponent(
       `Olá Arthur! Testei a luz ${t.name} (${t.k}) ${sujeito} no seu site e gostaria de um orçamento de iluminação.`);
@@ -40,17 +41,81 @@
   dim.oninput = () => { on = true; light(); };
   pw.onclick = () => { on = !on; light(); };
 
-  // foto do visitante: fica só no navegador (URL local), nada é enviado
+
+  // ---- foto do visitante: relight local (sem IA, sem enviar nada) ----
+  // Em vez de um filtro por cima, mexe pixel a pixel: a cor da luz age mais nas áreas iluminadas,
+  // o "dimmer" escurece o ambiente mas preserva as luminárias acesas, e as luzes da foto ganham brilho (bloom) na cor escolhida.
+  const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+  const engine = {
+    ready: false, raf: 0, cv: document.getElementById('ucv'),
+    // desfoque barato e compatível com todos os navegadores: reduz pela metade várias vezes e volta ao tamanho original
+    blur(map, W, H, div) {
+      const a = document.createElement('canvas'); a.width = W; a.height = H;
+      const actx = a.getContext('2d'), im = actx.createImageData(W, H);
+      for (let p = 0, q = 0; p < map.length; p++, q += 4) { const v = map[p] * 255; im.data[q] = im.data[q + 1] = im.data[q + 2] = v; im.data[q + 3] = 255; }
+      actx.putImageData(im, 0, 0);
+      let cur = a, w = W, h = H;
+      const tw = Math.max(2, Math.round(W / div)), th = Math.max(2, Math.round(H / div));
+      while (w > tw * 1.5) {
+        w = Math.max(tw, Math.round(w / 2)); h = Math.max(th, Math.round(h / 2));
+        const n = document.createElement('canvas'); n.width = w; n.height = h;
+        const nctx = n.getContext('2d'); nctx.imageSmoothingQuality = 'high'; nctx.drawImage(cur, 0, 0, w, h); cur = n;
+      }
+      const b = document.createElement('canvas'); b.width = W; b.height = H;
+      const bctx = b.getContext('2d'); bctx.imageSmoothingQuality = 'high'; bctx.drawImage(cur, 0, 0, W, H);
+      const d = bctx.getImageData(0, 0, W, H).data, out = new Float32Array(W * H);
+      for (let p = 0, q = 0; p < out.length; p++, q += 4) out[p] = d[q] / 255;
+      return out;
+    },
+    load(img) {
+      const k = Math.min(1, 1100 / Math.max(img.naturalWidth, img.naturalHeight));
+      const W = this.W = Math.round(img.naturalWidth * k), H = this.H = Math.round(img.naturalHeight * k);
+      const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
+      const tctx = tmp.getContext('2d'); tctx.drawImage(img, 0, 0, W, H);
+      this.src = tctx.getImageData(0, 0, W, H).data;
+      const n = W * H, lum = this.lum = new Float32Array(n), hl = new Float32Array(n);
+      for (let p = 0, q = 0; p < n; p++, q += 4) {
+        const l = (0.2126 * this.src[q] + 0.7152 * this.src[q + 1] + 0.0722 * this.src[q + 2]) / 255;
+        lum[p] = l; hl[p] = smooth(0.84, 0.98, l);     // pontos muito claros = luminárias / reflexos
+      }
+      this.hs = this.blur(hl, W, H, 22);               // brilho curto, perto da luminária
+      this.hb = this.blur(hl, W, H, 7);                // luz que se espalha pelo ambiente
+      this.cv.width = W; this.cv.height = H;
+      this.ctx = this.cv.getContext('2d'); this.out = this.ctx.createImageData(W, H);
+      this.ready = true; this.render();
+    },
+    schedule() { if (!this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.render(); }); },
+    render() {
+      if (!this.ready) return;
+      const c = TEMPS[cur].rgb.split(',').map(Number).map(v => v / 255);
+      const y = 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2], g = c.map(v => v / y);   // ganho de cor mantendo o brilho
+      const i = on ? dim.value / 100 : 0.03, d = Math.min(1, 0.16 + i * 0.99), s = 0.6, bs = Math.pow(i, 1.3) * 0.9;
+      const { src, lum, hs, hb } = this, o = this.out.data, n = this.W * this.H;
+      for (let p = 0, q = 0; p < n; p++, q += 4) {
+        const l = lum[p], w = 0.3 + 0.7 * smooth(0.05, 0.65, l);   // sombra profunda leva menos cor
+        const e = d + (1 - d) * hs[p];                              // luminárias continuam acesas ao reduzir
+        const bl = (hs[p] * 0.5 + hb[p] * 0.7) * bs * (1 - 0.45 * l);
+        for (let k = 0; k < 3; k++) {
+          let v = (src[q + k] / 255) * (1 + (g[k] - 1) * s * w) * e + bl * c[k];
+          if (v > 0.8) v = 0.8 + 0.2 * (1 - Math.exp(-(v - 0.8) / 0.2));
+          o[q + k] = v * 255;
+        }
+        o[q + 3] = 255;
+      }
+      this.ctx.putImageData(this.out, 0, 0);
+    }
+  };
+
   const photo = document.getElementById('photo'), file = document.getElementById('file'), tag = document.getElementById('tag'),
-    reset = document.getElementById('reset'), dl = document.getElementById('dl'), wa = document.getElementById('wa'), note = document.getElementById('upnote');
-  const DEFAULT_NOTE = note.textContent, EXAMPLE_SRC = photo.getAttribute('src'), EXAMPLE_RATIO = '1400 / 875';
+    reset = document.getElementById('reset'), wa = document.getElementById('wa'), note = document.getElementById('upnote');
+  const DEFAULT_NOTE = note.textContent, EXAMPLE_RATIO = '1400 / 875';
   let userUrl = null;
   const say = (msg, err) => { note.textContent = msg; note.classList.toggle('err', !!err); };
   function useExample() {
     if (userUrl) URL.revokeObjectURL(userUrl);
-    userUrl = null;
-    photo.src = EXAMPLE_SRC; stage.style.aspectRatio = EXAMPLE_RATIO; stage.classList.remove('user');
-    tag.textContent = 'Projeto de exemplo'; reset.hidden = dl.hidden = true; say(DEFAULT_NOTE); light();
+    userUrl = null; engine.ready = false;
+    stage.style.aspectRatio = EXAMPLE_RATIO; stage.classList.remove('user');
+    tag.textContent = 'Projeto de exemplo'; reset.hidden = true; say(DEFAULT_NOTE); light();
   }
   file.onchange = () => {
     const f = file.files[0]; file.value = '';
@@ -60,28 +125,15 @@
     const url = URL.createObjectURL(f), probe = new Image();
     probe.onload = () => {
       if (userUrl) URL.revokeObjectURL(userUrl);
-      userUrl = url; photo.src = url;
+      userUrl = url;
       stage.style.aspectRatio = Math.min(1.9, Math.max(0.75, probe.naturalWidth / probe.naturalHeight));
-      stage.classList.add('user'); tag.textContent = 'Sua foto'; reset.hidden = dl.hidden = false;
-      say('Pronto! Troque a cor e a intensidade da luz. É uma simulação ilustrativa.'); light();
+      stage.classList.add('user'); tag.textContent = 'Sua foto'; reset.hidden = false;
+      engine.load(probe);
+      say('Pronto! Troque a cor e a intensidade. É uma simulação ilustrativa: ajusta a luz que já aparece na foto.'); light();
     };
     probe.onerror = () => { URL.revokeObjectURL(url); say('Não consegui abrir essa imagem. Tente JPG ou PNG.', true); };
     probe.src = url;
   };
   reset.onclick = useExample;
-  dl.onclick = () => {
-    const w0 = photo.naturalWidth, h0 = photo.naturalHeight, k = Math.min(1, 1800 / Math.max(w0, h0));
-    const cv = document.createElement('canvas'); cv.width = Math.round(w0 * k); cv.height = Math.round(h0 * k);
-    const ctx = cv.getContext('2d'), li = on ? dim.value / 100 : 0.03;
-    ctx.filter = `brightness(${0.26 + li * 0.8}) saturate(${0.7 + li * 0.35})`;   // mesmos valores do CSS
-    ctx.drawImage(photo, 0, 0, cv.width, cv.height);
-    ctx.filter = 'none'; ctx.globalCompositeOperation = 'multiply'; ctx.globalAlpha = 0.85;   // igual ao .stage.user .tint
-    ctx.fillStyle = `rgb(${TEMPS[cur].rgb})`; ctx.fillRect(0, 0, cv.width, cv.height);
-    ctx.globalCompositeOperation = 'color'; ctx.globalAlpha = 0.4; ctx.fillRect(0, 0, cv.width, cv.height);   // igual ao .tint2
-    cv.toBlob(b => {
-      const a = document.createElement('a'); a.href = URL.createObjectURL(b);
-      a.download = `simulacao-luz-${TEMPS[cur].k}.jpg`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    }, 'image/jpeg', 0.9);
-  };
   light();
 })();
