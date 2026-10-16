@@ -92,9 +92,10 @@
       const i = on ? dim.value / 100 : 0.03, d = Math.min(1, 0.16 + i * 0.99), s = 0.6, bs = Math.pow(i, 1.3) * 0.9;
       const { src, lum, hs, hb } = this, o = this.out.data, n = this.W * this.H;
       for (let p = 0, q = 0; p < n; p++, q += 4) {
-        const l = lum[p], w = 0.3 + 0.7 * smooth(0.05, 0.65, l);   // sombra profunda leva menos cor
+        // janelas = manchas claras grandes (luz do dia): não mudam de cor com a lâmpada. Luminária = mancha pequena.
+        const l = lum[p], win = smooth(0.45, 0.85, hb[p]), w = (0.3 + 0.7 * smooth(0.05, 0.65, l)) * (1 - 0.85 * win);   // sombra profunda leva menos cor
         const e = d + (1 - d) * hs[p];                              // luminárias continuam acesas ao reduzir
-        const bl = (hs[p] * 0.5 + hb[p] * 0.7) * bs * (1 - 0.45 * l);
+        const bl = (hs[p] * 0.5 + hb[p] * 0.7) * bs * (1 - 0.45 * l) * (1 - win);
         for (let k = 0; k < 3; k++) {
           let v = (src[q + k] / 255) * (1 + (g[k] - 1) * s * w) * e + bl * c[k];
           if (v > 0.8) v = 0.8 + 0.2 * (1 - Math.exp(-(v - 0.8) / 0.2));
