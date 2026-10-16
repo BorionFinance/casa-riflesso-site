@@ -139,7 +139,8 @@
       // 6) diagnóstico para avisar o visitante
       // clarão grande (flash, parede estourada) não é luminária: reduz o brilho para não virar uma mancha
       this.glare = Math.min(1, Math.max(0.12, 0.006 / Math.max(lampPx / n, 1e-4)));
-      this.info = { nz, passes, dark: p50 < 0.1, small: Math.max(img.naturalWidth, img.naturalHeight) < 600, noLamps: lampPx / n < 0.0003, flat: p99 - p1 < 0.25 };
+      // muita área clara (janelão, sol na parede) = foto dominada pela luz do dia, onde a lâmpada pouco aparece
+      this.info = { nz, passes, dark: p50 < 0.1, daylight: lampPx / n > 0.04, small: Math.max(img.naturalWidth, img.naturalHeight) < 600, noLamps: lampPx / n < 0.0003, flat: p99 - p1 < 0.25 };
       this.ready = true; this.render();
     },
     schedule() { if (!this.raf) this.raf = requestAnimationFrame(() => { this.raf = 0; this.render(); }); },
@@ -190,6 +191,7 @@
       const f = engine.info;
       say(f.dark ? 'A foto está bem escura, então clareei a imagem automaticamente. Com as luzes acesas o resultado fica bem melhor.'
         : f.small ? 'Foto pequena: a simulação pode perder qualidade. Se puder, envie uma foto maior.'
+        : f.daylight ? 'Essa foto tem muita luz natural (janela ou sol). A simulação mostra a luz artificial por cima; fica melhor com a foto tirada à noite ou com as cortinas fechadas.'
         : f.noLamps ? 'Não encontrei luminárias acesas na foto, então a simulação muda só o tom da luz. Tire com as luzes acesas para ver o brilho delas.'
         : 'Pronto! Troque a cor e a intensidade. É uma simulação ilustrativa: ajusta a luz que já aparece na foto.'); light();
     };
